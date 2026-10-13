@@ -15,7 +15,7 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.dialects.postgresql import TSTZRANGE, UUID, ExcludeConstraint, Range
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 # Deterministic constraint names keep Alembic migrations (and 23P01 error handling) stable.
 NAMING_CONVENTION = {
@@ -67,6 +67,11 @@ class Resource(Base):
     timezone: Mapped[str] = mapped_column(Text, server_default="America/Mexico_City")
     slot_minutes: Mapped[int] = mapped_column(Integer, server_default="60")
     active: Mapped[bool] = mapped_column(Boolean, server_default="true")
+
+    # Replacing the list rewrites the weekly schedule; weekdays left out mean closed.
+    opening_hours: Mapped[list["OpeningHours"]] = relationship(
+        cascade="all, delete-orphan", lazy="selectin", order_by="OpeningHours.weekday"
+    )
 
 
 class OpeningHours(Base):

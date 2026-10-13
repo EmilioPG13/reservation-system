@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engin
 from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
+from app.core.security import create_access_token
 from app.db.models import Resource, User
 from app.db.session import get_session
 from app.main import app
@@ -85,3 +86,16 @@ async def court(session: AsyncSession) -> Resource:
     session.add(r)
     await session.flush()
     return r
+
+
+@pytest.fixture
+def user_headers(user: User) -> dict[str, str]:
+    return {"Authorization": f"Bearer {create_access_token(str(user.id))}"}
+
+
+@pytest.fixture
+async def admin_headers(session: AsyncSession) -> dict[str, str]:
+    boss = User(email="boss@example.com", password_hash="x", name="Boss", role="admin")
+    session.add(boss)
+    await session.flush()
+    return {"Authorization": f"Bearer {create_access_token(str(boss.id))}"}

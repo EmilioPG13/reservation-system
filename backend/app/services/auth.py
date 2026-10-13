@@ -24,7 +24,23 @@ def normalize_email(email: str) -> str:
 
 async def register_user(session: AsyncSession, *, email: str, password: str, name: str) -> User:
     """Create a regular user. Uniqueness is enforced by the database, not by a prior lookup."""
-    user = User(email=normalize_email(email), password_hash=hash_password(password), name=name)
+    return await _create_user(session, email=email, password=password, name=name, role="user")
+
+
+async def create_admin(session: AsyncSession, *, email: str, password: str, name: str) -> User:
+    """Create an admin. Only the `create-admin` command calls this; no HTTP route may."""
+    return await _create_user(session, email=email, password=password, name=name, role="admin")
+
+
+async def _create_user(
+    session: AsyncSession, *, email: str, password: str, name: str, role: str
+) -> User:
+    user = User(
+        email=normalize_email(email),
+        password_hash=hash_password(password),
+        name=name,
+        role=role,
+    )
     session.add(user)
     try:
         await session.commit()
