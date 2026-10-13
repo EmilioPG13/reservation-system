@@ -7,7 +7,11 @@ dependencies = [
     "alembic>=1.20.0",
     "asyncpg>=0.32.0",
     "fastapi>=0.143.0",
+    "pwdlib[argon2]>=0.3.1",
     "pydantic-settings>=2.15.0",
+    "pydantic[email]>=2.14.1",
+    "pyjwt>=2.15.1",
+    "python-multipart>=0.0.32",
     "sqlalchemy[asyncio]>=2.1.4",
     "uvicorn[standard]>=0.54.0",
 ]
@@ -30,6 +34,10 @@ select = ["E", "F", "I", "UP", "B", "ASYNC"]
 [tool.ruff.lint.isort]
 # The local alembic/ migrations folder would otherwise make ruff treat the package as first-party.
 known-third-party = ["alembic"]
+
+[tool.coverage.run]
+# SQLAlchemy's async layer runs on greenlets; without this, code after a DB await is not traced.
+concurrency = ["greenlet", "thread"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

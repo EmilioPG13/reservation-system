@@ -10,6 +10,7 @@ from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 from app.db.models import Resource, User
+from app.db.session import get_session
 from app.main import app
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -50,9 +51,24 @@ async def session(engine: AsyncEngine, migrated_schema: None) -> AsyncIterator[A
     async with engine.connect() as conn:
         outer = await conn.begin()
         # Savepoint mode: a failed flush rolls back only its savepoint, not the whole test.
-        async with AsyncSession(bind=conn, join_transaction_mode="create_savepoint") as s:
+        async with AsyncSession(
+            bind=conn, join_transaction_mode="create_savepoint", expire_on_commit=False
+        ) as s:  # expire_on_commit matches app.db.session.SessionFactory
             yield s
         await outer.rollback()
+
+
+@pytest.fixture
+async def api_client(session: AsyncSession) -> AsyncIterator[AsyncClient]:
+    """HTTP client whose requests share the rolled-back test session, so nothing leaks."""
+
+    async def _session() -> AsyncIterator[AsyncSession]:
+        yield session
+
+    app.dependency_overrides[get_session] = _session
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+        yield c
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture
