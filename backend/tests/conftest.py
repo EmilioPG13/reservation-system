@@ -1,12 +1,18 @@
 from collections.abc import AsyncIterator
+from pathlib import Path
 
 import pytest
+from alembic import command
+from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
+from app.db.models import Resource, User
 from app.main import app
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent
 
 
 @pytest.fixture
@@ -21,3 +27,45 @@ async def engine() -> AsyncIterator[AsyncEngine]:
     eng = create_async_engine(settings.test_database_url, poolclass=NullPool)
     yield eng
     await eng.dispose()
+
+
+@pytest.fixture(scope="session")
+def alembic_config() -> Config:
+    cfg = Config(str(BACKEND_DIR / "alembic.ini"))
+    cfg.set_main_option("script_location", str(BACKEND_DIR / "alembic"))
+    cfg.set_main_option("sqlalchemy.url", settings.test_database_url)
+    return cfg
+
+
+@pytest.fixture(scope="session")
+def migrated_schema(alembic_config: Config) -> None:
+    """Rebuild the test database schema from the migrations, exercising both directions."""
+    command.downgrade(alembic_config, "base")
+    command.upgrade(alembic_config, "head")
+
+
+@pytest.fixture
+async def session(engine: AsyncEngine, migrated_schema: None) -> AsyncIterator[AsyncSession]:
+    """A session whose work is rolled back at the end, so tests never leak rows."""
+    async with engine.connect() as conn:
+        outer = await conn.begin()
+        # Savepoint mode: a failed flush rolls back only its savepoint, not the whole test.
+        async with AsyncSession(bind=conn, join_transaction_mode="create_savepoint") as s:
+            yield s
+        await outer.rollback()
+
+
+@pytest.fixture
+async def user(session: AsyncSession) -> User:
+    u = User(email="player@example.com", password_hash="x", name="Player")
+    session.add(u)
+    await session.flush()
+    return u
+
+
+@pytest.fixture
+async def court(session: AsyncSession) -> Resource:
+    r = Resource(name="Court 1")
+    session.add(r)
+    await session.flush()
+    return r
