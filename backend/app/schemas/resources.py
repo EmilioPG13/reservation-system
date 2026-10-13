@@ -129,6 +129,7 @@ class SlotRead(BaseModel):
     start: datetime
     end: datetime
     status: SlotStatus
+    mine: bool = False  # true on a `booked` slot when the caller holds the reservation
 
 
 class CourtAvailability(BaseModel):
@@ -155,7 +156,10 @@ class DayAvailability(BaseModel):
                     name=c.resource.name,
                     timezone=c.resource.timezone,
                     slot_minutes=c.resource.slot_minutes,
-                    slots=[SlotRead(start=s.start, end=s.end, status=s.status) for s in c.slots],
+                    slots=[
+                        SlotRead(start=s.start, end=s.end, status=s.status, mine=s.mine)
+                        for s in c.slots
+                    ],
                 )
                 for c in courts
             ],

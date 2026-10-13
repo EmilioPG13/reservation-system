@@ -5,6 +5,7 @@ partial slots) are tested as a table. `get_day_availability` loads the rows and 
 four queries however many courts exist, so the grid view needs a single API call.
 """
 
+import uuid
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
@@ -35,6 +36,7 @@ class Slot:
     start: datetime  # always UTC
     end: datetime
     status: SlotStatus
+    mine: bool = False  # booked by the user who asked
 
 
 @dataclass(frozen=True)
@@ -56,12 +58,14 @@ def build_slots(
     blackouts: list[Interval],
     bookings: list[Interval],
     now: datetime,
+    own: list[Interval] | None = None,
 ) -> list[Slot]:
     """Slots of the local calendar `day`, in UTC, with the status of each.
 
     `window` is the opening window in the court's local time (None means closed that day).
     Slots are stepped in UTC, so a day with a clock change simply has fewer or more real hours.
     A tail shorter than `slot_minutes` is dropped rather than offered as a short slot.
+    `own` is the part of `bookings` that belongs to the user asking; those slots get `mine`.
     """
     if window is None:
         return []
@@ -73,15 +77,17 @@ def build_slots(
     start = opens
     while start + step <= closes:
         end = start + step
+        mine = False
         if _overlaps(start, end, bookings):
             status = SlotStatus.BOOKED
+            mine = _overlaps(start, end, own or [])
         elif _overlaps(start, end, blackouts):
             status = SlotStatus.BLOCKED
         elif start < now:
             status = SlotStatus.PAST
         else:
             status = SlotStatus.AVAILABLE
-        slots.append(Slot(start, end, status))
+        slots.append(Slot(start, end, status, mine))
         start = end
     return slots
 
@@ -90,20 +96,29 @@ def _intervals(ranges: list[Range[datetime]]) -> list[Interval]:
     return [(r.lower, r.upper) for r in ranges]
 
 
+def day_span(day: date) -> Range[datetime]:
+    """A UTC span wider than any local day (UTC-12 to UTC+14), for fetching rows of `day`.
+
+    Courts live in different zones, so queries fetch this and let the caller do the exact cut.
+    """
+    midnight = datetime.combine(day, time.min, tzinfo=UTC)
+    return Range(midnight - timedelta(days=1), midnight + timedelta(days=2), bounds="[)")
+
+
 async def get_day_availability(
-    session: AsyncSession, *, day: date, now: datetime
+    session: AsyncSession, *, day: date, now: datetime, user_id: uuid.UUID | None = None
 ) -> list[CourtDay]:
-    """Every active court with its slots for `day`, read in the court's own time zone."""
+    """Every active court with its slots for `day`, read in the court's own time zone.
+
+    Slots booked by `user_id` are flagged `mine`; without a user none are.
+    """
     resources = list(
         await session.scalars(select(Resource).where(Resource.active).order_by(Resource.name))
     )
     if not resources:
         return []
 
-    # Courts live in different zones, so fetch a UTC span wider than any local day (UTC-12 to
-    # UTC+14) and let build_slots do the exact cut.
-    midnight = datetime.combine(day, time.min, tzinfo=UTC)
-    span = Range(midnight - timedelta(days=1), midnight + timedelta(days=2), bounds="[)")
+    span = day_span(day)  # build_slots does the exact cut
     ids = [r.id for r in resources]
 
     blackouts: dict = defaultdict(list)
@@ -115,14 +130,17 @@ async def get_day_availability(
         blackouts[resource_id].append(during)
 
     bookings: dict = defaultdict(list)
-    for resource_id, during in await session.execute(
-        select(Reservation.resource_id, Reservation.during).where(
+    own: dict = defaultdict(list)
+    for resource_id, during, booked_by in await session.execute(
+        select(Reservation.resource_id, Reservation.during, Reservation.user_id).where(
             Reservation.resource_id.in_(ids),
             Reservation.status == CONFIRMED,
             Reservation.during.overlaps(span),
         )
     ):
         bookings[resource_id].append(during)
+        if user_id is not None and booked_by == user_id:
+            own[resource_id].append(during)
 
     courts = []
     for resource in resources:
@@ -135,6 +153,7 @@ async def get_day_availability(
             blackouts=_intervals(blackouts[resource.id]),
             bookings=_intervals(bookings[resource.id]),
             now=now,
+            own=_intervals(own[resource.id]),
         )
         courts.append(CourtDay(resource, slots))
     return courts

@@ -19,11 +19,11 @@ async def list_resources(_: CurrentUser, session: SessionDep) -> list[ResourceRe
 
 @router.get("/availability")
 async def availability(
-    _: CurrentUser,
+    user: CurrentUser,
     session: SessionDep,
     day: Annotated[date, Query(alias="date", description="Local date, read in each court's zone")],
 ) -> DayAvailability:
     courts = await availability_service.get_day_availability(
-        session, day=day, now=datetime.now(UTC)
+        session, day=day, now=datetime.now(UTC), user_id=user.id
     )
     return DayAvailability.build(day, courts)

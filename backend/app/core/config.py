@@ -15,5 +15,9 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
 
+    # Business rules for reservations.
+    max_active_reservations: int = 3  # per user, counting those that have not ended yet
+    cancellation_window_hours: int = 12  # users cannot cancel closer to the start than this
+
 
 settings = Settings()

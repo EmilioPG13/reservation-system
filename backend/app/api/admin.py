@@ -1,8 +1,12 @@
 import uuid
+from datetime import UTC, date, datetime
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
 from app.api.deps import SessionDep, require_admin
+from app.api.reservations import HANDLED, reservation_http_error
+from app.schemas.reservations import AdminReservationRead, ReservationRead
 from app.schemas.resources import (
     BlackoutCreate,
     BlackoutRead,
@@ -11,6 +15,7 @@ from app.schemas.resources import (
     ResourceRead,
     ResourceUpdate,
 )
+from app.services import reservations as reservation_service
 from app.services import resources as resource_service
 
 # Every route here needs an admin: 401 without a token, 403 for a regular user.
@@ -105,3 +110,24 @@ async def delete_blackout(
             status_code=status.HTTP_404_NOT_FOUND, detail="Blackout not found"
         ) from None
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/reservations")
+async def list_reservations(
+    session: SessionDep,
+    day: Annotated[date, Query(alias="date", description="Local date, read in each court's zone")],
+) -> list[AdminReservationRead]:
+    rows = await reservation_service.list_for_day(session, day)
+    return [AdminReservationRead.from_day_reservation(row) for row in rows]
+
+
+@router.post("/reservations/{reservation_id}/cancel")
+async def cancel_reservation(reservation_id: uuid.UUID, session: SessionDep) -> ReservationRead:
+    """Cancel anyone's reservation at any time, e.g. one left standing under a blackout."""
+    try:
+        reservation = await reservation_service.cancel_as_admin(
+            session, reservation_id, now=datetime.now(UTC)
+        )
+    except HANDLED as exc:
+        raise reservation_http_error(exc) from None
+    return ReservationRead.from_reservation(reservation)
