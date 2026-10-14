@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator
+from email.message import EmailMessage
 from pathlib import Path
 
 import pytest
@@ -13,8 +14,21 @@ from app.core.security import create_access_token
 from app.db.models import Resource, User
 from app.db.session import get_session
 from app.main import app
+from app.services import mailer
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
+
+
+@pytest.fixture(autouse=True)
+def outbox(monkeypatch: pytest.MonkeyPatch) -> list[EmailMessage]:
+    """Every email the code under test sends; nothing reaches SMTP unless a test says so."""
+    sent: list[EmailMessage] = []
+
+    async def collect(message: EmailMessage) -> None:
+        sent.append(message)
+
+    monkeypatch.setattr(mailer, "send", collect)
+    return sent
 
 
 @pytest.fixture

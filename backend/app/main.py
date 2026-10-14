@@ -1,10 +1,28 @@
+import asyncio
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager, suppress
+
 from fastapi import FastAPI
 
 from app.api import admin, auth, health, reservations, resources
+from app.core.config import settings
+from app.workers import reminders
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    loop = asyncio.create_task(reminders.run_forever()) if settings.reminders_enabled else None
+    try:
+        yield
+    finally:
+        if loop is not None:
+            loop.cancel()
+            with suppress(asyncio.CancelledError):
+                await loop
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="Court Booking")
+    app = FastAPI(title="Court Booking", lifespan=lifespan)
     app.include_router(health.router)
     app.include_router(auth.router)
     app.include_router(resources.router)

@@ -2,11 +2,15 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import CurrentUser, SessionDep
+from app.db.models import Reservation
 from app.schemas.reservations import ReservationCreate, ReservationPage, ReservationRead
+from app.services import mailer, notifications
 from app.services import reservations as reservation_service
+from app.services.notifications import Notice
 from app.services.resources import ResourceNotFound
 
 router = APIRouter(prefix="/reservations", tags=["reservations"])
@@ -49,9 +53,18 @@ def reservation_http_error(exc: Exception) -> HTTPException:
 HANDLED = (ResourceNotFound, reservation_service.ReservationError)
 
 
+async def queue_email(
+    background: BackgroundTasks, session: AsyncSession, reservation: Reservation, notice: Notice
+) -> None:
+    """Send the email after the response, so a slow or failing mail server never shows."""
+    message = await notifications.prepare(session, reservation, notice)
+    if message is not None:
+        background.add_task(mailer.send_safely, message)
+
+
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_reservation(
-    body: ReservationCreate, user: CurrentUser, session: SessionDep
+    body: ReservationCreate, user: CurrentUser, session: SessionDep, background: BackgroundTasks
 ) -> ReservationRead:
     try:
         reservation = await reservation_service.book(
@@ -63,6 +76,7 @@ async def create_reservation(
         )
     except HANDLED as exc:
         raise reservation_http_error(exc) from None
+    await queue_email(background, session, reservation, Notice.CONFIRMED)
     return ReservationRead.from_reservation(reservation)
 
 
@@ -86,7 +100,7 @@ async def my_reservations(
 
 @router.post("/{reservation_id}/cancel")
 async def cancel_reservation(
-    reservation_id: uuid.UUID, user: CurrentUser, session: SessionDep
+    reservation_id: uuid.UUID, user: CurrentUser, session: SessionDep, background: BackgroundTasks
 ) -> ReservationRead:
     try:
         reservation = await reservation_service.cancel_own(
@@ -94,4 +108,5 @@ async def cancel_reservation(
         )
     except HANDLED as exc:
         raise reservation_http_error(exc) from None
+    await queue_email(background, session, reservation, Notice.CANCELLED)
     return ReservationRead.from_reservation(reservation)
