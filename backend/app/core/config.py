@@ -1,5 +1,28 @@
-from pydantic import SecretStr
+from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy.engine import make_url
+
+# Query options that Neon, Vercel and libpq put in their URLs. asyncpg cannot take them as is.
+_DROPPED_QUERY_OPTIONS = {"channel_binding", "connect_timeout"}
+
+
+def asyncpg_url(raw: str) -> str:
+    """Accept a connection string as a provider hands it out and make it work with asyncpg.
+
+    `postgres://` and `postgresql://` become `postgresql+asyncpg://`, `sslmode=` becomes `ssl=`,
+    and options asyncpg does not know are dropped. Anything else is returned unchanged.
+    """
+    if not raw:
+        return raw
+    url = make_url(raw)
+    if url.drivername not in {"postgres", "postgresql", "postgresql+asyncpg"}:
+        return raw
+    query = {k: v for k, v in url.query.items() if k not in _DROPPED_QUERY_OPTIONS}
+    if "sslmode" in query:
+        query.setdefault("ssl", query["sslmode"])
+        del query["sslmode"]
+    url = url.set(drivername="postgresql+asyncpg", query=query)
+    return url.render_as_string(hide_password=False)
 
 
 class Settings(BaseSettings):
@@ -46,6 +69,11 @@ class Settings(BaseSettings):
     # Browser origins allowed to call the API, comma-separated (e.g. the deployed frontend).
     # Empty means no CORS: in development Vite proxies /api, so the browser never crosses origins.
     cors_origins: str = ""
+
+    @field_validator("database_url", "migration_database_url")
+    @classmethod
+    def _asyncpg(cls, value: str) -> str:
+        return asyncpg_url(value)
 
 
 settings = Settings()

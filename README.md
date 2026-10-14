@@ -86,7 +86,7 @@ cd frontend ; npm test                  # Vitest + React Testing Library
 cd frontend ; npm run test:e2e          # Playwright, needs the whole stack running
 ```
 
-At the time of writing: 215 backend tests at 94% line coverage, 26 Vitest tests, and 3 Playwright tests against the real stack (the two-browser race, "my reservations", the admin cancel). CI runs ruff and pytest against a PostgreSQL service, plus lint, Vitest and the build for the frontend.
+At the time of writing: 224 backend tests at 94% line coverage, 26 Vitest tests, and 3 Playwright tests against the real stack (the two-browser race, "my reservations", the admin cancel). CI runs ruff and pytest against a PostgreSQL service, plus lint, Vitest and the build for the frontend.
 
 ## Limitations
 

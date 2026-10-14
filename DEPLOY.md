@@ -7,9 +7,9 @@ Free-tier limits change without notice; recheck them before relying on this.
 ## 1. Database (Neon)
 
 1. Create a project on PostgreSQL 17. `btree_gist` is supported; the first migration creates the extension.
-2. Keep two connection strings, both rewritten for asyncpg: scheme `postgresql+asyncpg://` and `?ssl=require` instead of `?sslmode=require` (drop `channel_binding=require` if present).
-   - **Direct** host (no `-pooler`) goes in `MIGRATION_DATABASE_URL`.
-   - **Pooled** host (`-pooler`) goes in `DATABASE_URL`, together with `DATABASE_POOLED=true`. Neon's pooler is PgBouncer in transaction mode, which breaks asyncpg's prepared-statement cache; that flag turns the cache off.
+2. Copy two connection strings exactly as the provider shows them (no editing; the app turns `postgresql://` into `postgresql+asyncpg://`, `sslmode` into `ssl`, and drops `channel_binding`):
+   - **Direct** host (no `-pooler`, `DATABASE_URL_UNPOOLED` on Vercel) goes in `MIGRATION_DATABASE_URL`.
+   - **Pooled** host (`-pooler`, `DATABASE_URL` on Vercel) goes in `DATABASE_URL`, together with `DATABASE_POOLED=true`. Neon's pooler is PgBouncer in transaction mode, which breaks asyncpg's prepared-statement cache; that flag turns the cache off.
 3. Neon suspends idle compute after 5 minutes. The first request afterwards is slower; the interface shows a loading state.
 
 ## 2. API (Northflank)
