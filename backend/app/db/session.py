@@ -4,7 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from app.core.config import settings
 
-engine = create_async_engine(settings.database_url)
+# A transaction-mode pooler hands each statement to any server connection, so asyncpg's cached
+# prepared statements would not exist there.
+_connect_args = {"statement_cache_size": 0} if settings.database_pooled else {}
+engine = create_async_engine(settings.database_url, connect_args=_connect_args)
 SessionFactory = async_sessionmaker(engine, expire_on_commit=False)
 
 

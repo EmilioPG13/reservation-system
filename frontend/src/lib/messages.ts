@@ -16,6 +16,9 @@ const EXACT: Record<string, string> = {
   'Court not found': 'No se encontró la cancha.',
   'Reservation not found': 'No se encontró la reserva.',
   'Blackout not found': 'No se encontró el bloqueo.',
+  'Too many attempts, try again in a minute':
+    'Demasiados intentos. Espera un minuto e inténtalo de nuevo.',
+  'Registration is closed': 'El registro de la demo está cerrado por ahora.',
   'Not authenticated': 'Tu sesión terminó. Entra de nuevo.',
 }
 

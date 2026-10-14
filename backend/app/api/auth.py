@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.api.deps import CurrentUser, SessionDep
+from app.core.rate_limit import login_limit, register_limit
 from app.core.security import create_access_token
 from app.schemas.auth import RegisterRequest, TokenResponse, UserRead
 from app.services import auth as auth_service
@@ -11,12 +12,18 @@ from app.services import auth as auth_service
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/register", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register", status_code=status.HTTP_201_CREATED, dependencies=[Depends(register_limit)]
+)
 async def register(body: RegisterRequest, session: SessionDep) -> UserRead:
     try:
         user = await auth_service.register_user(
             session, email=body.email, password=body.password, name=body.name
         )
+    except auth_service.RegistrationClosed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Registration is closed"
+        ) from None
     except auth_service.EmailAlreadyRegistered:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Email already registered"
@@ -24,7 +31,7 @@ async def register(body: RegisterRequest, session: SessionDep) -> UserRead:
     return UserRead.model_validate(user)
 
 
-@router.post("/login")
+@router.post("/login", dependencies=[Depends(login_limit)])
 async def login(
     form: Annotated[OAuth2PasswordRequestForm, Depends()], session: SessionDep
 ) -> TokenResponse:

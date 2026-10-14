@@ -23,7 +23,11 @@ target_metadata = Base.metadata
 
 
 def get_url() -> str:
-    return config.get_main_option("sqlalchemy.url") or settings.database_url
+    return (
+        config.get_main_option("sqlalchemy.url")
+        or settings.migration_database_url
+        or settings.database_url
+    )
 
 
 # other values from the config, defined by the needs of env.py,

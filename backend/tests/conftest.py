@@ -9,6 +9,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.pool import NullPool
 
+from app.core import rate_limit
 from app.core.config import settings
 from app.core.security import create_access_token
 from app.db.models import Resource, User
@@ -29,6 +30,12 @@ def outbox(monkeypatch: pytest.MonkeyPatch) -> list[EmailMessage]:
 
     monkeypatch.setattr(mailer, "send", collect)
     return sent
+
+
+@pytest.fixture(autouse=True)
+def fresh_rate_limiter() -> None:
+    """Attempts counted in one test must not count against the next."""
+    rate_limit.reset()
 
 
 @pytest.fixture

@@ -9,9 +9,11 @@ from zoneinfo import ZoneInfo
 import httpx
 import pytest
 from httpx import AsyncClient
+from pydantic import SecretStr
 from sqlalchemy.dialects.postgresql import Range
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.db.models import OpeningHours, Reservation, Resource, User
 from app.services import mailer
 from app.services.notifications import Notice, compose
@@ -253,3 +255,34 @@ async def test_the_smtp_transport_delivers_to_mailpit(user: User):
 
     assert [m["To"][0]["Address"] for m in inbox] == [user.email]
     assert inbox[0]["Subject"].startswith("Booking confirmed: Court Azul")
+
+
+async def test_the_smtp_login_and_starttls_reach_the_transport(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    seen: dict = {}
+
+    async def fake_send(message, **kwargs):
+        seen.update(kwargs)
+
+    monkeypatch.setattr(mailer.aiosmtplib, "send", fake_send)
+    monkeypatch.setattr(settings, "smtp_username", "apikey")
+    monkeypatch.setattr(settings, "smtp_password", SecretStr("s3cret"))
+    monkeypatch.setattr(settings, "smtp_start_tls", True)
+
+    await real_send(EmailMessage())
+
+    assert (seen["username"], seen["password"], seen["start_tls"]) == ("apikey", "s3cret", True)
+
+
+async def test_without_credentials_the_transport_is_told_none(monkeypatch: pytest.MonkeyPatch):
+    seen: dict = {}
+
+    async def fake_send(message, **kwargs):
+        seen.update(kwargs)
+
+    monkeypatch.setattr(mailer.aiosmtplib, "send", fake_send)
+
+    await real_send(EmailMessage())
+
+    assert (seen["username"], seen["password"], seen["start_tls"]) == (None, None, False)

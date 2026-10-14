@@ -17,6 +17,9 @@ async def send(message: EmailMessage) -> None:
         hostname=settings.smtp_host,
         port=settings.smtp_port,
         timeout=settings.smtp_timeout_seconds,
+        username=settings.smtp_username or None,
+        password=settings.smtp_password.get_secret_value() or None,
+        start_tls=settings.smtp_start_tls,
     )
 
 

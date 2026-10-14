@@ -1,9 +1,10 @@
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.security import burn_password_check, hash_password, verify_password
 from app.db.models import User
 
@@ -12,6 +13,10 @@ UNIQUE_VIOLATION = "23505"
 
 class EmailAlreadyRegistered(Exception):
     pass
+
+
+class RegistrationClosed(Exception):
+    """The account cap (`max_users`) is reached; only the demo's abuse limit uses it."""
 
 
 class InvalidCredentials(Exception):
@@ -24,6 +29,11 @@ def normalize_email(email: str) -> str:
 
 async def register_user(session: AsyncSession, *, email: str, password: str, name: str) -> User:
     """Create a regular user. Uniqueness is enforced by the database, not by a prior lookup."""
+    # A soft cap: two simultaneous sign-ups at the limit may both pass, which is harmless here.
+    if settings.max_users > 0 and await session.scalar(select(func.count(User.id))) >= (
+        settings.max_users
+    ):
+        raise RegistrationClosed
     return await _create_user(session, email=email, password=password, name=name, role="user")
 
 
