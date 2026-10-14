@@ -4,7 +4,9 @@
 
 Padel court reservations where **double bookings are impossible by construction**: PostgreSQL itself rejects overlapping reservations (an exclusion constraint on a time range), instead of the application checking first and hoping.
 
-**Live demo:** _not deployed yet, see [DEPLOY.md](DEPLOY.md)_
+**Live demo: https://reservation-system-azure.vercel.app** (interface in Spanish). Register with any email and book a cell. Open it in two browsers to see the race below.
+
+The first visit after a quiet spell can take a few seconds: the free-tier database suspends when idle. Hosted on Vercel (frontend), Northflank (API) and Neon (PostgreSQL); how it is wired is in [DEPLOY.md](DEPLOY.md).
 
 ![The court grid](media/grid.gif)
 
