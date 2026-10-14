@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-14T00:00:00Z",
+  "title": "Design System: Court Booking",
+  "extensions": {
+    "colorMeta": {
+      "paper": { "role": "neutral", "displayName": "Timetable Paper", "canonical": "#ffffff", "tonalRamp": ["#141414", "#3a3a3a", "#6b6b6b", "#9a9a9a", "#c4c4c4", "#e0e0e0", "#f3f4f5", "#ffffff"] },
+      "wash": { "role": "neutral", "displayName": "Grey Wash", "canonical": "#f3f4f5", "tonalRamp": ["#141414", "#3b3c3d", "#66686a", "#929496", "#b8babc", "#d6d8d9", "#ebeced", "#f3f4f5"] },
+      "ink": { "role": "neutral", "displayName": "Printer's Ink", "canonical": "#141414", "tonalRamp": ["#141414", "#2b2b2b", "#454545", "#616161", "#808080", "#a3a3a3", "#c8c8c8", "#ececec"] },
+      "ink-soft": { "role": "neutral", "displayName": "Soft Ink", "canonical": "#55595f", "tonalRamp": ["#1a1c1e", "#2d3033", "#3f4347", "#55595f", "#74787e", "#979ba0", "#bcbfc3", "#e0e2e4"] },
+      "rule": { "role": "neutral", "displayName": "Hairline Rule", "canonical": "#c9ccd1", "tonalRamp": ["#3a3c40", "#585b60", "#797d83", "#9a9ea4", "#b4b7bc", "#c9ccd1", "#dee0e3", "#f0f1f2"] },
+      "edge": { "role": "neutral", "displayName": "Control Edge", "canonical": "#80858c", "tonalRamp": ["#23252a", "#3a3d42", "#555960", "#6d7279", "#80858c", "#a0a4aa", "#c3c6ca", "#e4e5e8"] },
+      "signal": { "role": "primary", "displayName": "Signal Red", "canonical": "#d90018", "tonalRamp": ["#3d0007", "#650010", "#8f0016", "#b3001b", "#d90018", "#f0455a", "#f88c99", "#fdecee"] },
+      "signal-wash": { "role": "primary", "displayName": "Signal Wash", "canonical": "#fdecee", "tonalRamp": ["#d90018", "#e8404f", "#f06c79", "#f59aa3", "#f8bcc2", "#fad1d5", "#fce1e4", "#fdecee"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Day Line", "purpose": "The date on the day line, 700, 90% width." },
+      "headline": { "displayName": "Product Name", "purpose": "Product name in the top rule." },
+      "title": { "displayName": "Hour Label", "purpose": "Hours in the grid head; minutes drop to 0.8125rem, 400, ink-soft." },
+      "body": { "displayName": "Body", "purpose": "UI copy and buttons; tabular figures on globally." },
+      "label": { "displayName": "Cell Word", "purpose": "State words and notes in grid cells, 90% width." }
+    },
+    "shadows": [
+      { "name": "inset-selection", "value": "inset 0 0 0 3px #d90018", "purpose": "Outline of the Seleccionada cell; inset so the cell never changes size. Not a drop shadow." },
+      { "name": "inset-changed-hold", "value": "inset 0 0 0 2px #d90018", "purpose": "Outline of a slot that changed since the last poll." }
+    ],
+    "motion": [
+      { "name": "ease-out-expo", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Button background and color inversion over 150ms. Reduced motion collapses transitions to 0.01ms." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "The one button vocabulary: square, ruled, inverts on hover.",
+      "html": "<button class=\"ds-btn\">Anterior</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 2.75rem; padding: 0 1.125rem; border: 1.5px solid var(--color-ink, #141414); border-radius: 0; background: var(--color-paper, #fff); color: var(--color-ink, #141414); font: inherit; font-size: 0.9375rem; font-weight: 600; cursor: pointer; transition: background-color 150ms cubic-bezier(0.16,1,0.3,1), color 150ms cubic-bezier(0.16,1,0.3,1); } .ds-btn:hover { background: var(--color-ink, #141414); color: var(--color-paper, #fff); } .ds-btn:focus-visible { outline: 3px solid var(--color-ink, #141414); outline-offset: 2px; }"
+    },
+    {
+      "name": "Action Plate",
+      "kind": "custom",
+      "refersTo": "plate",
+      "description": "The inverted opaque band for the one main action, shown once a cell is selected.",
+      "html": "<div class=\"ds-plate\"><p>Cancha 1 &middot; 09:00 <span>Seleccionada</span></p><div class=\"ds-plate-actions\"><button class=\"ds-plate-btn\">Cancelar</button><button class=\"ds-plate-main\">Reservar</button></div></div>",
+      "css": ".ds-plate { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.75rem; background: #141414; color: #fff; border: 1.5px solid #141414; font-size: 0.9375rem; } .ds-plate p { margin: 0; font-weight: 600; } .ds-plate span { margin-left: 0.5rem; font-weight: 400; opacity: 0.8; } .ds-plate-actions { display: flex; gap: 0.5rem; } .ds-plate-btn, .ds-plate-main { min-height: 2.75rem; padding: 0 1.125rem; border: 1.5px solid #fff; border-radius: 0; font: inherit; font-weight: 600; cursor: pointer; } .ds-plate-btn { background: transparent; color: #fff; } .ds-plate-btn:hover { background: #fff; color: #141414; } .ds-plate-main { background: #fff; color: #141414; } .ds-plate-main:hover { background: #d90018; border-color: #d90018; color: #fff; } .ds-plate button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Square ruled input, ink border on focus, red border when invalid.",
+      "html": "<input class=\"ds-field\" value=\"nombre@correo.com\" />",
+      "css": ".ds-field { width: 100%; box-sizing: border-box; min-height: 2.75rem; padding: 0 0.75rem; border: 1.5px solid #80858c; border-radius: 0; background: #fff; color: #141414; font: inherit; caret-color: #d90018; } .ds-field:focus-visible { outline: 3px solid #141414; outline-offset: 0; border-color: #141414; } .ds-field[aria-invalid=\"true\"] { border-color: #d90018; }"
+    },
+    {
+      "name": "Navigation",
+      "kind": "nav",
+      "refersTo": "button",
+      "description": "Top rule: 6px ink band, product name, text links with a 3px active underline.",
+      "html": "<header class=\"ds-nav\"><p class=\"ds-nav-name\">Court Booking</p><nav><a class=\"ds-nav-link ds-active\" href=\"#\">Reservar</a><a class=\"ds-nav-link\" href=\"#\">Mis reservas</a></nav></header>",
+      "css": ".ds-nav { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.25rem 1.5rem; padding: 0.75rem 1rem 0; background: #fff; border-top: 6px solid #141414; border-bottom: 1.5px solid #141414; } .ds-nav-name { margin: 0; padding-bottom: 0.5rem; flex: 1; font-size: 1.25rem; font-weight: 700; letter-spacing: -0.025em; font-stretch: 90%; } .ds-nav nav { display: flex; gap: 1.25rem; } .ds-nav-link { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 0.25rem; border-bottom: 3px solid transparent; color: #55595f; font-size: 1rem; font-weight: 600; text-decoration: none; } .ds-nav-link:hover { color: #141414; } .ds-nav-link.ds-active { border-color: #141414; color: #141414; } .ds-nav-link:focus-visible { outline: 3px solid #141414; outline-offset: 2px; }"
+    },
+    {
+      "name": "Grid Cell",
+      "kind": "custom",
+      "refersTo": "grid-cell",
+      "description": "A ruled timetable cell: a fixed-position mark above a state word. Shown here: libre, ocupada, tuya, seleccionada.",
+      "html": "<div class=\"ds-grid\"><div class=\"ds-cell\"><span class=\"ds-mark\"></span><span>Libre</span></div><div class=\"ds-cell ds-ocupada\"><span class=\"ds-mark\"></span><span>Ocupada</span></div><div class=\"ds-cell ds-tuya\"><span class=\"ds-mark\"></span><span>Tuya</span></div><div class=\"ds-cell ds-sel\"><span class=\"ds-mark\"></span><span>Seleccionada</span></div></div>",
+      "css": ".ds-grid { display: grid; grid-template-columns: repeat(4, 5.75rem); border: 1.5px solid #141414; } .ds-cell { box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 0.25rem; min-height: 3.875rem; padding: 0.375rem 0.375rem 0.375rem 0.5rem; background: #fff; border-right: 1px solid #c9ccd1; border-bottom: 1px solid #c9ccd1; font-size: 0.75rem; font-stretch: 90%; line-height: 1.25; cursor: pointer; } .ds-cell:hover { background: #f3f4f5; } .ds-cell:focus-visible { outline: 3px solid #141414; outline-offset: -3px; } .ds-mark { box-sizing: border-box; width: 0.8125rem; height: 0.8125rem; border: 1.5px solid #141414; background: #fff; } .ds-ocupada { background: #f3f4f5; } .ds-ocupada .ds-mark { background: #141414; } .ds-tuya { background: #fdecee; font-weight: 700; } .ds-tuya .ds-mark { background: #d90018; border-color: #d90018; } .ds-sel { box-shadow: inset 0 0 0 3px #d90018; font-weight: 700; } .ds-sel .ds-mark { border: 3px solid #d90018; }"
+    },
+    {
+      "name": "Grid Head",
+      "kind": "custom",
+      "refersTo": "grid-head",
+      "description": "Sticky hours row: large hour, quiet minutes, wash fill, heavy ink underline.",
+      "html": "<div class=\"ds-head\">09<span>:00</span></div>",
+      "css": ".ds-head { box-sizing: border-box; display: flex; align-items: flex-end; width: 5.75rem; min-height: 2.75rem; padding: 0 0.5rem 0.375rem; background: #f3f4f5; border-right: 1px solid #c9ccd1; border-bottom: 1.5px solid #141414; font-size: 1.0625rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; } .ds-head span { font-size: 0.8125rem; font-weight: 400; color: #55595f; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Horario Gráfico",
+    "overview": "A day of courts is read as one printed timetable page, in the manner of a Swiss or European railway Fahrplan: strict rows and columns, hairline rules, data and nothing else. White offset-printed stock, near-black ink, grey hairlines and a single signal red. The system refuses the sporty rounded-card booking app and the dashboard of cards; there are no cards here, only ruled boxes.\n\nEverything is square. Depth does not exist: rules, weight, and inversion do the work that shadows and fills do elsewhere. State is never carried by colour alone: every grid cell holds a word plus a mark in a fixed place, and colour only reinforces. Figures and hours are tabular so columns read as columns.",
+    "keyCharacteristics": [
+      "One neutral grotesque (Archivo Variable) in few sizes, hours and figures tabular.",
+      "Hairline-square corners everywhere; no radii, no gradients, no drop shadows.",
+      "Two neutral layers (paper, wash) plus ink; one accent, signal red.",
+      "State is a word plus a fixed-position mark; cell height and column width never depend on content.",
+      "One inverted opaque ink plate per screen for the main action."
+    ],
+    "rules": [
+      { "name": "The Scarce Signal Rule", "body": "Red marks the thing the user is acting on or must notice: their own booking, the live selection, a slot that changed, an error. It is never decoration, never a heading colour, never a fill on chrome.", "section": "colors" },
+      { "name": "The Selection Exception Rule", "body": "Seleccionada's red outline is the one deliberate exception beside Tuya and the changed-slot hold: the selection is the live state the user is acting on. It earns red by that role and sets no precedent for other red outlines.", "section": "colors" },
+      { "name": "The Colour-Reinforces Rule", "body": "A state must be fully legible in greyscale from its word and mark. Colour is added second.", "section": "colors" },
+      { "name": "The Few Sizes Rule", "body": "The ramp is 0.75, 0.8125, 0.9375, 1.0625, 1.25, 1.75, 2.5rem. A new surface picks from it; it does not add a size.", "section": "typography" },
+      { "name": "The Tabular Rule", "body": "Hours, dates and counts are set tabular; the hour is large and its minutes quiet.", "section": "typography" },
+      { "name": "The Flat Page Rule", "body": "Nothing floats off the page. A new element is separated by a rule or a layer change, not by a shadow, blur or lift.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do give every state a word plus a fixed-position mark, and let colour only reinforce it.",
+      "Do keep cell height (3.875rem) and column width (5.75rem) independent of content.",
+      "Do use ink and the paper/wash layers for structure; separate with 1px `rule` hairlines or 1.5px ink rules.",
+      "Do keep one inverted plate for the primary action per screen.",
+      "Do use signal red only for Tuya, the selection, the changed-slot hold and errors.",
+      "Do keep controls at least 2.75rem tall and use the 3px ink focus outline."
+    ],
+    "donts": [
+      "Don't add rounded corners, cards, drop shadows, blur or gradient fills.",
+      "Don't introduce a second accent or use red as chrome, heading colour or decoration.",
+      "Don't convey state by colour alone, or hide a state word.",
+      "Don't make the grid reflow when a cell is selected or a name is added.",
+      "Don't add typefaces or sizes outside the ramp above."
+    ]
+  }
+}

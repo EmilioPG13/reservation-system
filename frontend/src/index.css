@@ -1,0 +1,325 @@
+@import "@fontsource-variable/archivo/wdth.css";
+@import "tailwindcss";
+
+/* Horario Gráfico: white timetable stock, near-black ink, hairline rules, one signal red. */
+@theme {
+  --font-sans: "Archivo Variable", system-ui, sans-serif;
+
+  --color-paper: #ffffff;
+  --color-wash: #f3f4f5; /* second neutral layer: header band, table head */
+  --color-ink: #141414;
+  --color-ink-soft: #55595f; /* 7:1 on paper */
+  --color-rule: #c9ccd1; /* hairlines between cells */
+  --color-edge: #80858c; /* control borders, 3.6:1 on paper */
+  --color-signal: #d90018; /* the only accent: "Tuya", the selection, a changed slot */
+  --color-signal-wash: #fdecee;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1.0625rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.5rem;
+}
+
+@layer base {
+  html {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-stretch: 100%;
+    font-variant-numeric: tabular-nums;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    font-size: var(--text-base);
+    line-height: 1.45;
+  }
+  ::selection {
+    background: var(--color-ink);
+    color: var(--color-paper);
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+  /* The grid's own scroller: a thin ruled bar instead of the platform's grey slab. */
+  .scroller {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-ink) var(--color-wash);
+  }
+  input,
+  select,
+  button {
+    font: inherit;
+  }
+  input {
+    caret-color: var(--color-signal);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* One button vocabulary for the whole app. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding: 0 1.125rem;
+    border: 1.5px solid var(--color-ink);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-weight: 600;
+    font-size: var(--text-base);
+    cursor: pointer;
+    transition:
+      background-color 150ms cubic-bezier(0.16, 1, 0.3, 1),
+      color 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .btn:hover:not(:disabled) {
+    background: var(--color-ink);
+    color: var(--color-paper);
+  }
+  .btn:disabled {
+    border-color: var(--color-rule);
+    color: var(--color-ink-soft);
+    cursor: not-allowed;
+  }
+  /* The inverted opaque plate: at most one per screen, for the main action. */
+  .btn-plate {
+    background: var(--color-ink);
+    color: var(--color-paper);
+  }
+  .btn-plate:hover:not(:disabled) {
+    background: var(--color-signal);
+    border-color: var(--color-signal);
+  }
+  .btn-plate:disabled {
+    background: var(--color-wash);
+  }
+  /* The court grid. State is a word plus a mark in a fixed place; color only reinforces it. */
+  .grid-scroller {
+    --court-w: 5.75rem;
+    --cell-w: 5.75rem;
+    overflow: auto;
+    max-height: calc(100dvh - 15rem);
+    min-height: 12rem;
+    border: 1.5px solid var(--color-ink);
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: var(--court-w);
+    overscroll-behavior-x: contain;
+  }
+  .grid-table {
+    display: grid;
+    grid-template-columns: var(--court-w) repeat(var(--cols), minmax(var(--cell-w), 1fr));
+    /* Columns never depend on their content, so selecting a cell cannot reflow the grid. */
+    width: 100%;
+    min-width: calc(var(--court-w) + var(--cols) * var(--cell-w));
+  }
+  .grid-row {
+    display: contents;
+  }
+  .grid-head,
+  .grid-court,
+  .grid-cell {
+    box-sizing: border-box;
+    /* One height for every row, so a booker's name line never makes the table jump. */
+    min-height: 3.875rem;
+    border-right: 1px solid var(--color-rule);
+    border-bottom: 1px solid var(--color-rule);
+    scroll-snap-align: start;
+  }
+  .grid-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: flex-end;
+    min-height: 2.75rem;
+    padding: 0 0.5rem 0.375rem;
+    background: var(--color-wash);
+    border-bottom: 1.5px solid var(--color-ink);
+    font-size: var(--text-lg);
+    font-weight: 700;
+    line-height: 1;
+  }
+  .grid-head .minutes {
+    font-size: var(--text-sm);
+    font-weight: 400;
+    color: var(--color-ink-soft);
+  }
+  .grid-corner,
+  .grid-court {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    scroll-snap-align: none;
+  }
+  .grid-corner {
+    z-index: 4;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    border-right: 1.5px solid var(--color-ink);
+  }
+  .grid-court {
+    display: flex;
+    align-items: center;
+    padding: 0 0.5rem;
+    background: var(--color-wash);
+    border-right: 1.5px solid var(--color-ink);
+    font-size: var(--text-sm);
+    font-weight: 700;
+  }
+  .grid-cell {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.125rem;
+    padding: 0.375rem 0.375rem 0.375rem 0.5rem;
+    background: var(--color-paper);
+    font-size: var(--text-xs);
+    font-stretch: 90%;
+    line-height: 1.25;
+    cursor: default;
+  }
+  /* The mark sits in the same place in every cell, the word under it. */
+  .grid-cell > .cell-line {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  .grid-cell[data-actionable="true"] {
+    cursor: pointer;
+  }
+  .grid-cell[data-actionable="true"]:hover {
+    background: var(--color-wash);
+  }
+  .grid-cell:focus-visible {
+    outline: 3px solid var(--color-ink);
+    outline-offset: -3px;
+    position: relative;
+    z-index: 1;
+  }
+  .grid-cell[data-kind="ocupada"] {
+    background: var(--color-wash);
+  }
+  .grid-cell[data-kind="no-disponible"],
+  .grid-cell[data-kind="cerrada"] {
+    color: var(--color-ink-soft);
+  }
+  .grid-cell[data-kind="tuya"] {
+    background: var(--color-signal-wash);
+    font-weight: 700;
+  }
+  .grid-cell[data-kind="seleccionada"] {
+    box-shadow: inset 0 0 0 3px var(--color-signal);
+    font-weight: 700;
+  }
+  /* A slot someone else took since the last poll stays marked until the user acts. */
+  .grid-cell[data-changed="true"] {
+    box-shadow: inset 0 0 0 2px var(--color-signal);
+  }
+  .cell-note {
+    font-size: var(--text-xs);
+    color: var(--color-ink-soft);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .cell-note[data-signal="true"] {
+    color: var(--color-signal);
+    font-weight: 700;
+  }
+  .mark {
+    flex: none;
+    box-sizing: border-box;
+    width: 0.8125rem;
+    height: 0.8125rem;
+    border: 1.5px solid var(--color-ink);
+    background: var(--color-paper);
+  }
+  [data-kind="ocupada"] .mark {
+    background: var(--color-ink);
+  }
+  [data-kind="no-disponible"] .mark {
+    border-color: var(--color-edge);
+    background: linear-gradient(
+      to top right,
+      transparent calc(50% - 1px),
+      var(--color-edge) calc(50% - 1px),
+      var(--color-edge) calc(50% + 1px),
+      transparent calc(50% + 1px)
+    );
+  }
+  [data-kind="tuya"] .mark {
+    border-color: var(--color-signal);
+    background: var(--color-signal);
+  }
+  [data-kind="seleccionada"] .mark {
+    border: 3px solid var(--color-signal);
+  }
+  [data-kind="cerrada"] .mark {
+    display: none;
+  }
+  /* The inverted opaque plate: the whole action band is ink, text and buttons in paper. */
+  .plate {
+    background: var(--color-ink);
+    color: var(--color-paper);
+    border: 1.5px solid var(--color-ink);
+  }
+  .plate .btn {
+    background: transparent;
+    border-color: var(--color-paper);
+    color: var(--color-paper);
+  }
+  .plate .btn:hover:not(:disabled) {
+    background: var(--color-paper);
+    color: var(--color-ink);
+  }
+  .plate .btn-plate {
+    background: var(--color-paper);
+    color: var(--color-ink);
+  }
+  .plate .btn-plate:hover:not(:disabled) {
+    background: var(--color-signal);
+    border-color: var(--color-signal);
+    color: var(--color-paper);
+  }
+  .plate .btn:disabled {
+    border-color: var(--color-ink-soft);
+    color: var(--color-edge);
+    background: transparent;
+  }
+  .plate :focus-visible {
+    outline-color: var(--color-paper);
+  }
+  .field {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0 0.75rem;
+    border: 1.5px solid var(--color-edge);
+    border-radius: 0;
+    background: var(--color-paper);
+    color: var(--color-ink);
+  }
+  .field:focus-visible {
+    outline-offset: 0;
+    border-color: var(--color-ink);
+  }
+  .field[aria-invalid="true"] {
+    border-color: var(--color-signal);
+  }
+}

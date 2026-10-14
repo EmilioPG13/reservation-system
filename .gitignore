@@ -17,3 +17,7 @@ dist/
 
 # graphify
 graphify-out/
+
+# impeccable: decision-page state and review screenshots are local
+.impeccable/questions/
+.impeccable/review/
