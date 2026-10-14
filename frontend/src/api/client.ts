@@ -31,5 +31,9 @@ const auth: Middleware = {
   },
 }
 
-export const api = createClient<paths>({ baseUrl: '/api' })
+// In development Vite proxies /api to the API. A deployed frontend on another origin sets
+// VITE_API_URL to the API's address (the API then needs that origin in CORS_ORIGINS).
+const baseUrl: string = import.meta.env.VITE_API_URL ?? '/api'
+
+export const api = createClient<paths>({ baseUrl })
 api.use(auth)

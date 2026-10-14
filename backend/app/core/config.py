@@ -30,5 +30,9 @@ class Settings(BaseSettings):
     reminder_hours_before: int = 24
     reminder_interval_seconds: float = 60
 
+    # Browser origins allowed to call the API, comma-separated (e.g. the deployed frontend).
+    # Empty means no CORS: in development Vite proxies /api, so the browser never crosses origins.
+    cors_origins: str = ""
+
 
 settings = Settings()
