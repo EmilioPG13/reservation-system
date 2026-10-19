@@ -1,5 +1,0 @@
-# Media and generated files add nodes without adding understanding.
-media/
-frontend/public/
-frontend/openapi.json
-frontend/src/api/schema.d.ts
